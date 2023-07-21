@@ -1,54 +1,95 @@
 <script setup lang="ts">
-defineProps({
-	brk: {
-		type: Object,
-		default: {ip: "", port: 0, address:"FIXME"},
-	}
-});
+	defineProps({
+		brk: {
+			type: Object,
+			default: {ip: "", port: 0, address:"FIXME"},
+		}
+	});
 </script>
 
 <script lang="ts">
-export default {
-	input: "",
-	res: Object,
-	created() {
-		this.input = "";
-		this.input = "Read data from " + this.brk.ip + ":" + this.brk.port
-		this.input = '<input type="submit" value="' + this.input + '" class="flex"/>';
-		console.log(this.input);
-	},
-	methods: {
-		async onReadAll() {
-
-			const requestOptions = {
-				headers: {
-          "Access-Control-Allow-Origin": "*",
-				}
-			};
-
-
-			let port: number = import.meta.env.VITE_BACK_PORT;
-			let host = import.meta.env.VITE_IP;
-
-			let res:String = await (
-					await fetch(
-						`http://${host}:${port}/brokerList`, requestOptions
-					)
-				).json();
-			this.res = res;
+	export default {
+		created() {
+			this.res = [];
+			this.hasSetRes = false;
 		},
+		data: () => {
+			return {
+				res: Array,
+				hasSetRes: false,
+
+			};
+		},
+
+
+		methods: {
+			// TODO this should return a list, and later func would let you read 1 by 1 from returned list
+			// No time to do this tho
+			async onReadAllSummary() {
+
+				const requestOptions = {
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+					}
+				};
+
+				let port: number = import.meta.env.VITE_BACK_PORT;
+				let host = import.meta.env.VITE_IP;
+
+				let res:String = await (
+						await fetch(
+							`http://${host}:${port}/ctrct/${brk.address}/get/all`, requestOptions
+						)
+					).json();
+
+				console.log(res);
+				for(let k of res){
+					console.log(k);
+					this.res.push(k);
+				}
+
+				this.hasSetRes = true
+			},
+
+			async onReadAllFiles() {
+				const requestOptions = {
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+					}
+				};
+
+				let port: number = import.meta.env.VITE_BACK_PORT;
+				let host = import.meta.env.VITE_IP;
+
+				let res:String = await (
+						await fetch(
+							`http://${host}:${port}/brk/${brk.ip}:${brk.port}/get/all`, requestOptions
+						)
+					).json();
+
+				console.log(res);
+				for(let k of res){
+					console.log(k);
+					this.res.push(k);
+				}
+
+				this.hasSetRes = true
+			},
+
+		}
 	}
-}
 </script>
 
 <template>
 	<br/>
 	<div class="flex"> 
-		<form @submit="onReadAll" class="flex">
-			<div class="flex">
-				<span v-html="input"></span>
-			</div>
-		</form>
+		<span>
+			<button @click="this.onReadAllSummary"> request index (summary) data from {{ this.brk.ip }}:{{ this.brk.port }}</button>
+			<button @click="this.onReadAllFiles"> request all files from {{ this.brk.ip }}:{{ this.brk.port }} (will be factureted)</button>
+		</span>
+		<div v-if="hasSetRes">
+			<span v-for="(brk, index) in res" :key=index>{{ brk }}</span>
+		</div>
 	</div>
 </template>
 
